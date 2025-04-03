@@ -15,7 +15,7 @@ export default defineNuxtConfig({
           content: "Website statis DPRD Tasikmalaya Kota",
         },
       ],
-      link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
+      link: [{ rel: "icon", type: "image/x-icon", href: "logo.ico" }],
     },
   },
 });
