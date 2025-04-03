@@ -18,9 +18,4 @@ export default defineNuxtConfig({
       link: [{ rel: "icon", type: "image/x-icon", href: "logo.ico" }],
     },
   },
-  runtimeConfig: {
-    gmailUser: process.env.GMAIL_USER,
-    gmailAppPassword: process.env.GMAIL_APP_PASSWORD,
-    public: {},
-  },
 });

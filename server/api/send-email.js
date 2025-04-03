@@ -1,36 +1,51 @@
-import { defineEventHandler } from 'h3'
-import nodemailer from 'nodemailer'
+import { defineEventHandler, readBody } from "h3";
+import nodemailer from "nodemailer";
 
 export default defineEventHandler(async (event) => {
-  try {
-    const body = await readBody(event)
-    const { name, email, subject, message } = body
+  console.log("📩 Email API Called...");
 
-    // Validasi input
-    if (!name || !email || !subject || !message) {
-      return { success: false, message: 'Semua field harus diisi.' }
+  try {
+    const body = await readBody(event).catch(() => null);
+
+    if (!body) {
+      console.error("❌ Request body kosong!");
+      return new Response(
+        JSON.stringify({ success: false, message: "Invalid request." }),
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
-    // Konfigurasi transporter untuk nodemailer
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER, // Email developer Anda
-        pass: process.env.GMAIL_APP_PASSWORD, // App Password dari Gmail developer Anda
-      },
-    })
+    const { name, email, subject, message } = body;
 
-    // Konfigurasi email
+    if (!name || !email || !subject || !message) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Semua field harus diisi." }),
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    console.log("📧 Preparing to send email...");
+
+    // SMTP Configuration
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+
     const mailOptions = {
-      from: process.env.GMAIL_USER, // Email pengirim (akun developer Anda)
-      to: 'zeenajg02@gmail.com', // Email tujuan
+      from: `"DPRD Tasik" <${process.env.GMAIL_USER}>`,
+      to: "rezasapitraa@gmail.com",
       subject: `Pesan Baru: ${subject}`,
-      text: `
-        Nama: ${name}
-        Email: ${email}
-        Subjek: ${subject}
-        Pesan: ${message}
-      `,
+      text: `Nama: ${name}\nEmail: ${email}\nSubjek: ${subject}\nPesan: ${message}`,
       html: `
         <h2>Pesan Baru dari Website DPRD Kota Tasikmalaya</h2>
         <p><strong>Nama:</strong> ${name}</p>
@@ -38,14 +53,23 @@ export default defineEventHandler(async (event) => {
         <p><strong>Subjek:</strong> ${subject}</p>
         <p><strong>Pesan:</strong> ${message}</p>
       `,
-    }
+    };
 
-    // Kirim email
-    await transporter.sendMail(mailOptions)
+    console.log("🚀 Sending email...");
 
-    return { success: true, message: 'Email berhasil dikirim.' }
+    await transporter.sendMail(mailOptions);
+
+    console.log("✅ Email sent successfully!");
+
+    return new Response(
+      JSON.stringify({ success: true, message: "Email berhasil dikirim." }),
+      { headers: { "Content-Type": "application/json" } }
+    );
   } catch (error) {
-    console.error('Error sending email with Gmail:', error)
-    return { success: false, message: 'Gagal mengirim email.' }
+    console.error("❌ Error sending email:", error);
+    return new Response(
+      JSON.stringify({ success: false, message: "Gagal mengirim email." }),
+      { headers: { "Content-Type": "application/json" } }
+    );
   }
-})  
+});
